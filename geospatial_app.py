@@ -9,6 +9,21 @@ from googlemaps import Client
 from random import choice
 import csv
 
+def load_mapped_data():
+    data = pd.read_csv(data_path)
+    data_geometry = data['geometry']
+    data_latitude=[]
+    data_longitude=[]
+    n=0
+    while n<len(data_geometry):
+        data_dict=eval(data_geometry[n])
+        data_latitude.append(data_dict['location']['lat'])
+        data_longitude.append(data_dict['location']['lng'])
+        n+=1
+        lat_long_dict = {'latitude':data_latitude, 'longitude':data_longitude}
+        df=pd.DataFrame(lat_long_dict)
+        print(df)
+    return df
 # api_keys = ["AIzaSyDzGFnUansbrpbKmBriOfe0MV7jgIE0tq4", "AIzaSyAE5RQ7RYaXaQVbo4Hfum_GC7FxPoneiPs", "AIzaSyBCGTBzYDNyawvqpGtMKFdOiCLsUv7gU30", "AIzaSyBq16pq0-Aa6diYVOeBs0Kx-H3ulacDcoc", "AIzaSyDYcHpXlwN5jYFioA1jhNwbDW2_8f40l7Q"]
 # key = choice(api_keys)
 
@@ -58,72 +73,58 @@ if (address != '') and (query != ''):
         elif op_time == 'False':
             op_val = False
 
-        nr_results = nr.search_results(query=query, radius=radius, now=op_val)
-        st.write("Google Places API Search Completed")
+    nr_results = nr.search_results(query=query, radius=radius, now=op_val)
+    st.write("Google Places API Search Completed")
 
-        if st.button("Sample Result: "):
-            st.write(nr_results[0]['results'][0])
+    if st.button("Sample Result: "):
+        st.write(nr_results[0]['results'][0])
 
-        count = 0
-        place_names = nr.df['name'].tolist()
-        result_dict = {}
-        while count < 5:
-            print('hello')
-            result = nr_results[count]
-            sleep(3)
-            try:
-                result2 = nr.gmaps.places(query=query, page_token=result['next_page_token'])
-            except:
-                print('no results')
-            try:
-                result3 = nr.gmaps.places(query=query, page_token=result2['next_page_token'])
-            except:
-                print('no results')
-            try:
-                result_dict[place_names[count]] = [result, result2, result3]
-            except:
-                result_dict[place_names[count]] = [result, result2]
-            count += 1
-
-        nr_frame_dict = nr.frame_process(result_dict)
+    count = 0
+    place_names = nr.df['name'].tolist()
+    result_dict = {}
+    while count < 5:
+        print('hello')
+        result = nr_results[count]
+        sleep(3)
+        try:
+            result2 = nr.gmaps.places(query=query, page_token=result['next_page_token'])
+        except:
+            print('no results')
+        try:
+            result3 = nr.gmaps.places(query=query, page_token=result2['next_page_token'])
+        except:
+            print('no results')
+        try:
+            result_dict[place_names[count]] = [result, result2, result3]
+        except:
+            result_dict[place_names[count]] = [result, result2]
+        count += 1
+    nr_frame_dict = nr.frame_process(result_dict)
 
         # if st.button("View Full Search Result: "):
         #     st.write(nr_frame_dict[])
-        def load_mapped_data():
-            data = pd.read_csv(data_path)
-            data_geometry = data['geometry']
-            data_latitude=[]
-            data_longitude=[]
-            n=0
-            while n<len(data_geometry):
-                data_dict=eval(data_geometry[n])
-                data_latitude.append(data_dict['location']['lat'])
-                data_longitude.append(data_dict['location']['lng'])
-                n+=1
-            lat_long_dict = {'latitude':data_latitude, 'longitude':data_longitude}
-            df=pd.DataFrame(lat_long_dict)
-            return df
 
-        nr_frame_dict = nr.frame_process(result_dict)
-        st.write("### Getting Haversine and Google Distances: ")
+    nr_frame_dict = nr.frame_process(result_dict)
+    st.write("### Getting Haversine and Google Distances: ")
 
-        haversine_distance = nr.haversine_distance(nr_frame_dict, 'mi')
-        st.write("Haversine Distance Completed.")
+    haversine_distance = nr.haversine_distance(nr_frame_dict, 'mi')
+    st.write("Haversine Distance Completed.")
 
-        transport = st.radio("What type of transportation do you want the distance for?: ", options=['walking', 'bicycling', 'transit', 'driving'])
+    transport = st.radio("What type of transportation do you want the distance for?: ", options=['walking', 'bicycling', 'transit', 'driving'])
 
-        google_distance = nr.google_distance(nr_frame_dict, transporation_mode=transport)
-        st.write("Google Distance Matrix API Completed.")
+    google_distance = nr.google_distance(nr_frame_dict, transporation_mode=transport)
+    st.write("Google Distance Matrix API Completed.")
 
 
-        final_results = nr.merge_frames(nr_frame_dict, haversine_distance, google_distance)
-        if st.button("Final Results"):
-            st.write(final_results['names'])
+    final_results = nr.merge_frames(nr_frame_dict, haversine_distance, google_distance)
+    if st.button("Final Results"):
+        st.write(final_results)
 
 
-        st.write("Show Results on a map: ")
-        if st.checkbox('Show map'):
-            st.map(load_mapped_data())
+    st.write("Show Results on a map: ")
+    if st.checkbox('Show map'):
+        print(load_mapped_data)
+        st.map(load_mapped_data())
 
         # except:
         #     st.error('Sorry, we could not retrieve data for this request. Please check your location and search text.')
