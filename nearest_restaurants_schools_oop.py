@@ -6,7 +6,21 @@ from os import listdir
 from random import choice
 
 
+def format_geo_location(data_path):
+    data = pd.read_csv(data_path)
+    data_geometry = data['geometry']
+    data_latitude=[]
+    data_longitude=[]
+    n=0
+    while n<len(data_geometry):
+        data_dict=eval(data_geometry[n])
+        data_latitude.append(data_dict['location']['lat'])
+        data_longitude.append(data_dict['location']['lng'])
+        n+=1
+    return data_longitude, data_latitude
+
 class nearest_restaurants:
+
     def __init__(self, data_path):
         api_keys = ["AIzaSyBHWiHNgsyEL8IzkG42rcZYmqzjIXXHswE", "AIzaSyCWg8Nc_PHzUa3QFPDuiJZbTtduSR0Oy1o", "AIzaSyA6_WJ3FFz275fXDdUDqbfAoCeJv-MgU3M", "AIzaSyA-uUIEY9yQlMxLyB1VvClmccmh0UhAF1I", "AIzaSyBEY4QQTyrSpkQ7zh7cLTAarT1XT5n7-OM", "AIzaSyCHHKIsjkmyc7Gl-3FlwDwvriIdolBNxm0", "AIzaSyChA2jpAdVygHY3t2_JgIpLVPf5Slddc_4", "AIzaSyBOBMgIgASl-f_ti76DAHrIwQDXRkoOSAU"]
         self.data_path = data_path
@@ -18,8 +32,8 @@ class nearest_restaurants:
         return self.df
 
     def make_coordinates(self):
-        self.lat = self.df['latitude'].tolist()
-        self.long = self.df['longitude'].tolist()
+        self.lat = format_geo_location(self.data_path)[1]
+        self.long = format_geo_location(self.data_path)[0]
         coordinates = list(zip(self.lat, self.long))
         return coordinates
 
@@ -74,7 +88,7 @@ class nearest_restaurants:
     def haversine_distance(self, school_results_dict, metric):
         distance_dict = {}
         school_coordinates = self.make_coordinates()
-        school_coord_dict = {school: school_coordinates[i] for i, school in enumerate(self.df['school_name'].tolist())}
+        school_coord_dict = {school: school_coordinates[i] for i, school in enumerate(self.df['name'].tolist())}
 
         for school in list(school_results_dict.keys()):
             distance_list = []
@@ -93,7 +107,7 @@ class nearest_restaurants:
     def google_distance(self, frame_dict, transporation_mode):
 
         school_coordinates = self.make_coordinates()
-        school_coordinate_dict = {school : school_coordinates[i] for i, school in enumerate(self.df['school_name'].tolist())}
+        school_coordinate_dict = {school : school_coordinates[i] for i, school in enumerate(self.df['name'].tolist())}
         result_dict = {}
 
         for school in list(frame_dict.keys()):
